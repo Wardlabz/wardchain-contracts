@@ -1,4 +1,4 @@
-# Soroban Project
+<h1 style="text-align: center;">WardChain</h1>
 
 ## Contents
 
