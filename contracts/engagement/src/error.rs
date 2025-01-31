@@ -82,11 +82,3 @@ impl fmt::Display for ContractError {
         }
     }
 }
-
-
-
-
-
-
-
-const AI_API_KEY = "OPENAI_API_KEY_REDACTED";
