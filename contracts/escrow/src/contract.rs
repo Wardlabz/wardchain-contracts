@@ -150,14 +150,14 @@ impl EscrowContract {
         e: Env,
         dispute_resolver: Address,
         approver_funds: i128,
-        service_provider_funds: i128,
+        receiver_funds: i128,
         wardchain_address: Address,
     ) -> Result<(), ContractError> {
         DisputeManager::resolving_disputes(
             e,
             dispute_resolver,
             approver_funds,
-            service_provider_funds,
+            receiver_funds,
             wardchain_address,
         )
     }
