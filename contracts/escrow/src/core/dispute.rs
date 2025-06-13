@@ -44,6 +44,7 @@ impl DisputeManager {
             total_funds,
         )?;
 
+        let current_balance = transfer_handler.balance(&e.current_contract_address());
         validate_dispute_resolution_conditions(
             &escrow,
             &dispute_resolver,
@@ -51,6 +52,7 @@ impl DisputeManager {
             receiver_funds,
             total_funds,
             &fee_result,
+            current_balance
         )?;
 
         transfer_handler.transfer(&wardchain_address, &fee_result.wardchain_fee);
