@@ -69,16 +69,14 @@ impl EscrowContract {
     pub fn release_funds(
         e: Env,
         release_signer: Address,
-        wardchain_address: Address,
     ) -> Result<(), ContractError> {
         let updated_distributed_escrow_earnings = EscrowManager::release_funds(
             e.clone(),
             release_signer.clone(),
-            wardchain_address.clone(),
         )?;
         e.events().publish(
             (symbol_short!("dis_esc"),),
-            (release_signer, wardchain_address),
+            release_signer,
         );
 
         Ok(updated_distributed_escrow_earnings)
@@ -159,14 +157,12 @@ impl EscrowContract {
         dispute_resolver: Address,
         approver_funds: i128,
         receiver_funds: i128,
-        wardchain_address: Address,
     ) -> Result<(), ContractError> {
         DisputeManager::resolve_dispute(
             e,
             dispute_resolver,
             approver_funds,
             receiver_funds,
-            wardchain_address,
         )
     }
 
