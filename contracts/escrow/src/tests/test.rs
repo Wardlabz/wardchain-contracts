@@ -1032,11 +1032,11 @@ fn test_dispute_resolution_process() {
     let approver_amount = (remaining_amount * approver_funds) / total_amount;
 
     // Check balances
-    // assert_eq!(
-    //     usdc_token.0.balance(&wardchain_address),
-    //     trustless_amount,
-    //     "WardChain commission amount is incorrect"
-    // );
+    assert_eq!(
+        usdc_token.0.balance(&wardchain_address),
+        wardchain_commission,
+        "WardChain commission amount is incorrect"
+    );
 
     assert_eq!(
         usdc_token.0.balance(&platform_address),
