@@ -29,24 +29,40 @@ impl DisputeManager {
         let token_client = TokenClient::new(&e, &escrow.trustline.address);
         let current_balance = token_client.balance(&contract_address);
 
-        validate_dispute_resolution_conditions(&escrow, &dispute_resolver, &distributions, current_balance)?;
+        validate_dispute_resolution_conditions(
+            &escrow,
+            &dispute_resolver,
+            &distributions,
+            current_balance,
+        )?;
 
         let mut total: i128 = 0;
         for (_addr, amount) in distributions.iter() {
             total = BasicMath::safe_add(total, amount)?;
         }
         let fee_result = FeeCalculator::calculate_standard_fees(total, escrow.platform_fee)?;
-        let total_fees = BasicMath::safe_add(fee_result.wardchain_fee, fee_result.platform_fee)?;
+        let total_fees =
+            BasicMath::safe_add(fee_result.wardchain_fee, fee_result.platform_fee)?;
 
         if fee_result.wardchain_fee > 0 {
-            token_client.transfer(&contract_address, &wardchain_address, &fee_result.wardchain_fee);
+            token_client.transfer(
+                &contract_address,
+                &wardchain_address,
+                &fee_result.wardchain_fee,
+            );
         }
         if fee_result.platform_fee > 0 {
-            token_client.transfer(&contract_address, &escrow.roles.platform_address, &fee_result.platform_fee);
+            token_client.transfer(
+                &contract_address,
+                &escrow.roles.platform_address,
+                &fee_result.platform_fee,
+            );
         }
 
         for (addr, amount) in distributions.iter() {
-            if amount <= 0 { continue; }
+            if amount <= 0 {
+                continue;
+            }
             let fee_share = (amount * (total_fees as i128)) / total;
             let net_amount = amount - fee_share;
             if net_amount > 0 {
