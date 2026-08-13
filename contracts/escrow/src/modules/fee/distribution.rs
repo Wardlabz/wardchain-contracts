@@ -15,13 +15,13 @@ pub fn calculate_and_distribute_fees(
     distributions: &Map<Address, i128>,
     total: i128,
 ) -> Result<(), ContractError> {
-    let mut actual_trustless_fees = 0i128;
+    let mut actual_wardchain_fees = 0i128;
     let mut actual_platform_fees = 0i128;
     let mut net_distributions: Vec<(Address, i128)> = Vec::new(e);
 
     for (addr, amount) in distributions.iter() {
         if amount > 0 {
-            let recipient_trustless_fee = BasicMath::safe_div(
+            let recipient_wardchain_fee = BasicMath::safe_div(
                 BasicMath::safe_mul(amount, fee_result.wardchain_fee)?,
                 total,
             )?;
@@ -31,11 +31,11 @@ pub fn calculate_and_distribute_fees(
             )?;
 
             let total_recipient_fee =
-                BasicMath::safe_add(recipient_trustless_fee, recipient_platform_fee)?;
+                BasicMath::safe_add(recipient_wardchain_fee, recipient_platform_fee)?;
             let net_amount = BasicMath::safe_sub(amount, total_recipient_fee)?;
 
-            actual_trustless_fees =
-                BasicMath::safe_add(actual_trustless_fees, recipient_trustless_fee)?;
+            actual_wardchain_fees =
+                BasicMath::safe_add(actual_wardchain_fees, recipient_wardchain_fee)?;
             actual_platform_fees =
                 BasicMath::safe_add(actual_platform_fees, recipient_platform_fee)?;
 
@@ -45,8 +45,8 @@ pub fn calculate_and_distribute_fees(
         }
     }
 
-    if actual_trustless_fees > 0 {
-        token_client.transfer(contract_address, wardchain_address, &actual_trustless_fees);
+    if actual_wardchain_fees > 0 {
+        token_client.transfer(contract_address, wardchain_address, &actual_wardchain_fees);
     }
     if actual_platform_fees > 0 {
         token_client.transfer(contract_address, platform_address, &actual_platform_fees);

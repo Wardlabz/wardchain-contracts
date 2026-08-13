@@ -9,7 +9,7 @@ This document provides a technical reference for the on-chain Soroban escrow con
 The contract implements a **single-release milestone-based escrow** system. It uses a factory-instance pattern where new escrow contracts can be dynamically deployed and managed.
 
 ### Escrow Factory vs. Instance
-* **Factory Deployment (`tw_new_single_release_escrow`)**: Deploys a new instance of the contract using `deploy_v2` with a salt and initialization arguments. This allows platforms to dynamically spawn independent escrow instances for each transaction/engagement.
+* **Factory Deployment (`wardchain_new_single_release_escrow`)**: Deploys a new instance of the contract using `deploy_v2` with a salt and initialization arguments. This allows platforms to dynamically spawn independent escrow instances for each transaction/engagement.
 * **Escrow Instance**: An individual deployed contract configured with its own roles, milestones, and funding status.
 
 ### High-Level Lifecycle Diagram
@@ -47,19 +47,19 @@ All exported functions in `EscrowContract` (`contracts/escrow/src/contract.rs`) 
 
 | Function | Authorized Signer(s) | Preconditions | Emitted Event(s) | REST API / SDK Equivalent |
 | :--- | :--- | :--- | :--- | :--- |
-| `tw_new_single_release_escrow` | `signer` | The contract must not already have an escrow stored. | None (invokes init functions internally) | `/escrow/single-release/v2/deploy` (Factory part) |
-| `initialize_escrow` | None (Typically Deployer) | Must not be already initialized. Flags must be false. Milestones must not be empty and <= 50. Platform fee + 0.3% WardChain fee must be <= 100%. | `InitEsc` (`tw_init`) | `/escrow/single-release/v2/deploy` (Init part) |
-| `fund_escrow` | `signer` | Escrow is initialized. `amount` > 0. Provided `expected_escrow` matches current stored state exactly. `signer` has enough trustline token balance. | `FundEsc` (`tw_fund`) | `/escrow/single-release/v2/fund` |
-| `release_funds` | `release_signer` | Escrow not already released/resolved. `release_signer` matches stored `roles.release_signer`. Escrow not disputed. All milestones are approved. Contract holds enough tokens. | `DisEsc` (`tw_release`) | `/escrow/single-release/v2/release` |
-| `update_escrow` | `platform` | `platform` matches `roles.platform`. Escrow not disputed. Platform address cannot be changed. Flags in updated properties must be false. See property immutability below. | `ChgEsc` (`tw_update`) | `/escrow/single-release/v2/update` |
+| `wardchain_new_single_release_escrow` | `signer` | The contract must not already have an escrow stored. | None (invokes init functions internally) | `/escrow/single-release/v2/deploy` (Factory part) |
+| `initialize_escrow` | None (Typically Deployer) | Must not be already initialized. Flags must be false. Milestones must not be empty and <= 50. Platform fee + 0.3% WardChain fee must be <= 100%. | `InitEsc` (`wardchain_init`) | `/escrow/single-release/v2/deploy` (Init part) |
+| `fund_escrow` | `signer` | Escrow is initialized. `amount` > 0. Provided `expected_escrow` matches current stored state exactly. `signer` has enough trustline token balance. | `FundEsc` (`wardchain_fund`) | `/escrow/single-release/v2/fund` |
+| `release_funds` | `release_signer` | Escrow not already released/resolved. `release_signer` matches stored `roles.release_signer`. Escrow not disputed. All milestones are approved. Contract holds enough tokens. | `DisEsc` (`wardchain_release`) | `/escrow/single-release/v2/release` |
+| `update_escrow` | `platform` | `platform` matches `roles.platform`. Escrow not disputed. Platform address cannot be changed. Flags in updated properties must be false. See property immutability below. | `ChgEsc` (`wardchain_update`) | `/escrow/single-release/v2/update` |
 | `get_escrow` | Public Read | Escrow must be initialized. | None | `/escrow/single-release/v2/get` |
 | `get_escrow_by_contract_id` | Public Read | Target contract exists and supports `get_escrow`. | None | - |
 | `get_multiple_escrow_balances` | Public Read | Input address array length <= 20. | None | - |
-| `extend_contract_ttl` | `platform` | `platform` matches stored `roles.platform`. | `ExtTtlEvt` (`tw_ttl_extend`) | - |
-| `change_milestone_status` | `service_provider` | `service_provider` matches stored `roles.service_provider`. Valid milestone index. Status cannot be empty. | `MilestoneStatusChanged` (`tw_ms_change`) | `/escrow/single-release/v2/milestone/status` |
-| `approve_milestone` | `approver` | `approver` matches stored `roles.approver`. Valid index. Milestone not already approved. Status is not empty. | `MilestoneApproved` (`tw_ms_approve`) | `/escrow/single-release/v2/milestone/approve` |
-| `dispute_escrow` | Any role except Dispute Resolver | `signer` matches one of the roles (approver, provider, platform, release_signer, receiver). Escrow not disputed/resolved. | `EscrowDisputed` (`tw_dispute`) | `/escrow/single-release/v2/dispute` |
-| `resolve_dispute` | `dispute_resolver` | `dispute_resolver` matches `roles.dispute_resolver`. Escrow must be disputed. Distributions length <= 50. Total distribution matches contract balance exactly. All values > 0. | `DisputeResolved` (`tw_disp_resolve`) | `/escrow/single-release/v2/dispute/resolve` |
+| `extend_contract_ttl` | `platform` | `platform` matches stored `roles.platform`. | `ExtTtlEvt` (`wardchain_ttl_extend`) | - |
+| `change_milestone_status` | `service_provider` | `service_provider` matches stored `roles.service_provider`. Valid milestone index. Status cannot be empty. | `MilestoneStatusChanged` (`wardchain_ms_change`) | `/escrow/single-release/v2/milestone/status` |
+| `approve_milestone` | `approver` | `approver` matches stored `roles.approver`. Valid index. Milestone not already approved. Status is not empty. | `MilestoneApproved` (`wardchain_ms_approve`) | `/escrow/single-release/v2/milestone/approve` |
+| `dispute_escrow` | Any role except Dispute Resolver | `signer` matches one of the roles (approver, provider, platform, release_signer, receiver). Escrow not disputed/resolved. | `EscrowDisputed` (`wardchain_dispute`) | `/escrow/single-release/v2/dispute` |
+| `resolve_dispute` | `dispute_resolver` | `dispute_resolver` matches `roles.dispute_resolver`. Escrow must be disputed. Distributions length <= 50. Total distribution matches contract balance exactly. All values > 0. | `DisputeResolved` (`wardchain_disp_resolve`) | `/escrow/single-release/v2/dispute/resolve` |
 | `withdraw_remaining_funds` | `dispute_resolver` | `dispute_resolver` matches `roles.dispute_resolver`. Escrow is released, resolved, or disputed. Total <= current balance. All amounts > 0. | None | - |
 
 ### Escrow Property Immutability in `update_escrow`
@@ -172,39 +172,39 @@ The following table lists the error codes defined in `contracts/escrow/src/error
 
 The contract publishes events for on-chain status tracking by indexers and clients:
 
-### `InitEsc` (Topic: `tw_init`, Format: `vec`)
+### `InitEsc` (Topic: `wardchain_init`, Format: `vec`)
 * Emitted when `initialize_escrow` successfully stores the escrow properties.
 * **Fields**: `escrow: Escrow` (The entire initialized escrow structure).
 
-### `FundEsc` (Topic: `tw_fund`, Format: `vec`)
+### `FundEsc` (Topic: `wardchain_fund`, Format: `vec`)
 * Emitted when `fund_escrow` transfers the escrow amount to the contract.
 * **Fields**: `signer: Address`, `amount: i128`.
 
-### `DisEsc` (Topic: `tw_release`, Format: `single-value`)
+### `DisEsc` (Topic: `wardchain_release`, Format: `single-value`)
 * Emitted when `release_funds` transfers payments and fees.
 * **Fields**: `release_signer: Address`.
 
-### `ChgEsc` (Topic: `tw_update`, Format: `vec`)
+### `ChgEsc` (Topic: `wardchain_update`, Format: `vec`)
 * Emitted when platform updates contract properties.
 * **Fields**: `platform: Address`, `engagement_id: String`, `new_escrow_properties: Escrow`.
 
-### `MilestoneStatusChanged` (Topic: `tw_ms_change`, Format: `vec`)
+### `MilestoneStatusChanged` (Topic: `wardchain_ms_change`, Format: `vec`)
 * Emitted when a milestone status/evidence is updated by the service provider.
 * **Fields**: `escrow: Escrow`.
 
-### `MilestoneApproved` (Topic: `tw_ms_approve`, Format: `vec`)
+### `MilestoneApproved` (Topic: `wardchain_ms_approve`, Format: `vec`)
 * Emitted when a milestone approved flag is updated by the approver.
 * **Fields**: `escrow: Escrow`.
 
-### `EscrowDisputed` (Topic: `tw_dispute`, Format: `vec`)
+### `EscrowDisputed` (Topic: `wardchain_dispute`, Format: `vec`)
 * Emitted when an escrow is disputed by an authorized signer.
 * **Fields**: `escrow: Escrow`.
 
-### `DisputeResolved` (Topic: `tw_disp_resolve`, Format: `vec`)
+### `DisputeResolved` (Topic: `wardchain_disp_resolve`, Format: `vec`)
 * Emitted when the dispute resolver resolves the dispute.
 * **Fields**: `escrow: Escrow`.
 
-### `ExtTtlEvt` (Topic: `tw_ttl_extend`, Format: `vec`)
+### `ExtTtlEvt` (Topic: `wardchain_ttl_extend`, Format: `vec`)
 * Emitted when contract persistent storage TTL is extended by the platform.
 * **Fields**: `platform: Address`, `ledgers_to_extend: u32`.
 
@@ -225,7 +225,7 @@ cargo test
 
 ### Test Directory Map (`contracts/escrow/src/tests`)
 * **`helpers.rs`**: Setup utilities for creating mock Soroban test environments, generating mock addresses, and deploying test token instances.
-* **`escrow.rs`**: Verifies factory deployment (`tw_new_single_release_escrow`), initialization (`initialize_escrow`), platform updates (`update_escrow`), and TTL extensions (`extend_contract_ttl`).
+* **`escrow.rs`**: Verifies factory deployment (`wardchain_new_single_release_escrow`), initialization (`initialize_escrow`), platform updates (`update_escrow`), and TTL extensions (`extend_contract_ttl`).
 * **`fund.rs`**: Tests funding validation (`fund_escrow`), release validation (`release_funds`), standard fee calculations, and payouts.
 * **`milestone.rs`**: Validates milestone state changes (`change_milestone_status`) and client approval logic (`approve_milestone`).
 * **`dispute.rs`**: Covers dispute flag transitions (`dispute_escrow`), dispute resolution payouts (`resolve_dispute`), and remaining funds retrieval (`withdraw_remaining_funds`).

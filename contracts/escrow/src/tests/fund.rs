@@ -697,7 +697,7 @@ fn test_withdraw_remaining_funds_rounding_edge_case() {
     let balance_before = usdc_token.0.balance(&client.address);
 
     // Record initial balances
-    let tw_before = usdc_token.0.balance(&wardchain_address);
+    let wardchain_before = usdc_token.0.balance(&wardchain_address);
     let platform_before = usdc_token.0.balance(&platform);
     let a_before = usdc_token.0.balance(&recipient_a);
     let b_before = usdc_token.0.balance(&recipient_b);
@@ -719,12 +719,12 @@ fn test_withdraw_remaining_funds_rounding_edge_case() {
     assert!(final_balance >= 0, "Contract balance must be non-negative");
 
     // Verify total outflows from the withdraw operation
-    let tw_delta = usdc_token.0.balance(&wardchain_address) - tw_before;
+    let wardchain_delta = usdc_token.0.balance(&wardchain_address) - wardchain_before;
     let platform_delta = usdc_token.0.balance(&platform) - platform_before;
     let a_delta = usdc_token.0.balance(&recipient_a) - a_before;
     let b_delta = usdc_token.0.balance(&recipient_b) - b_before;
 
-    let total_withdrawn = tw_delta + platform_delta + a_delta + b_delta;
+    let total_withdrawn = wardchain_delta + platform_delta + a_delta + b_delta;
     let balance_used = balance_before - final_balance;
     assert_eq!(
         total_withdrawn, balance_used,

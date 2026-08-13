@@ -422,12 +422,12 @@ fn test_resolve_dispute_rounding_edge_case() {
     assert!(final_balance >= 0, "Contract balance must be non-negative");
 
     // Verify the total outflows equal exactly the initial balance
-    let tw_balance = usdc_token.0.balance(&wardchain_address);
+    let wardchain_balance = usdc_token.0.balance(&wardchain_address);
     let platform_balance = usdc_token.0.balance(&platform);
     let approver_balance = usdc_token.0.balance(&approver);
     let sp_balance = usdc_token.0.balance(&service_provider);
 
-    let total_outflow = tw_balance + platform_balance + approver_balance + sp_balance;
+    let total_outflow = wardchain_balance + platform_balance + approver_balance + sp_balance;
     assert_eq!(
         total_outflow + final_balance,
         total,

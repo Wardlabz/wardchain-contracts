@@ -39,8 +39,8 @@ impl FeeCalculatorTrait for FeeCalculator {
         let platform_fee =
             SafeMath::safe_mul_div(total_amount, platform_fee_bps, BASIS_POINTS_DENOMINATOR)?;
 
-        let after_tw = BasicMath::safe_sub(total_amount, wardchain_fee)?;
-        let receiver_amount = BasicMath::safe_sub(after_tw, platform_fee)?;
+        let after_wardchain = BasicMath::safe_sub(total_amount, wardchain_fee)?;
+        let receiver_amount = BasicMath::safe_sub(after_wardchain, platform_fee)?;
 
         Ok(StandardFeeResult {
             wardchain_fee,

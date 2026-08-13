@@ -1,59 +1,64 @@
-<p align="center"> <img src="https://github.com/user-attachments/assets/5b182044-dceb-41f5-acf0-da22dea7c98a" alt="CLR-S (2)"> </p>
-
 # Wardchain Contracts
-It enables trustless payments via smart contracts, securing funds in escrow until milestones are approved by clients. Stablecoins like USDC are used to ensure stability and ease of use.
 
-# Maintainers | [Telegram](https://t.me/+kmr8tGegxLU0NTA5)
+**Non-custodial escrow smart contracts for the Stellar network (Soroban).**
 
-<table align="center">
-  <tr>
-    <td align="center">
-      <img src="https://github.com/user-attachments/assets/6b97e15f-9954-47d0-81b5-49f83bed5e4b" alt="Owner 1" width="150" />
-      <br /><br />
-      <strong>Tech Rebel | Product Manager</strong>
-      <br /><br />
-      <a href="https://github.com/techrebelgit" target="_blank">techrebelgit</a>
-      <br />
-      <a href="https://t.me/Tech_Rebel" target="_blank">Telegram</a>
-    </td>
-    <td align="center">
-      <img src="https://github.com/user-attachments/assets/e245e8af-6f6f-4a0a-a37f-df132e9b4986" alt="Owner 2" width="150" />
-      <br /><br />
-      <strong>Joel Vargas | Frontend Developer</strong>
-      <br /><br />
-      <a href="https://github.com/JoelVR17" target="_blank">JoelVR17</a>
-      <br />
-      <a href="https://t.me/joelvr20" target="_blank">Telegram</a>
-    </td>
-    <td align="center">
-      <img src="https://github.com/user-attachments/assets/53d65ea1-007e-40aa-b9b5-e7a10d7bea84" alt="Owner 3" width="150" />
-      <br /><br />
-      <strong>Armando Murillo | Full Stack Developer</strong>
-      <br /><br />
-      <a href="https://github.com/armandocodecr" target="_blank">armandocodecr</a>
-      <br />
-      <a href="https://t.me/armandocode" target="_blank">Telegram</a>
-    </td>
-    <td align="center">
-      <img src="https://github.com/user-attachments/assets/851273f6-2f91-413d-bd2d-d8dc1f3c2d28" alt="Owner 4" width="150" />
-      <br /><br />
-      <strong>Caleb Loría | Smart Contract Developer</strong>
-      <br /><br />
-      <a href="https://github.com/zkCaleb-dev" target="_blank">zkCaleb-dev</a>
-      <br />
-      <a href="https://t.me/zkCaleb_dev" target="_blank">Telegram</a>
-    </td>
-  </tr>
-</table>
+Wardchain enables **trustless payments** via smart contracts, securing funds in escrow until milestones are approved by clients. Stablecoins like USDC are used to ensure stability and ease of use — no intermediaries, no custody, full on-chain transparency.
+
+The contracts implement a **milestone-based, single-release escrow** system built on the Soroban runtime. Each engagement gets its own independently deployed contract instance, spawned on demand through a factory, and governed by explicit on-chain roles:
+
+| Role | Responsibility |
+|---|---|
+| `signer` | Deploys and funds the escrow |
+| `platform` | Manages escrow settings and TTL extension |
+| `service_provider` | Marks milestone work as completed |
+| `approver` | Reviews and approves milestone deliverables |
+| `release_signer` | Releases funds once all milestones are approved |
 
 ## Contents
 
 - [On-Chain Contract Reference](docs/CONTRACT_REFERENCE.md)
+- [Repository Structure](#repository-structure)
+- [Contract Features](#contract-features)
 - [Installing Rust](#installing-rust)
 - [Install the Stellar CLI](#install-stellar-cli)
 - [Configuring the CLI for Testnet](#configuring-the-cli-for-testnet)
-- [Configure an idenity](#configure-an-identity)
-- [Deploy project on Testenet](#deploy-project-on-testnet)
+- [Configure an Identity](#configure-an-identity)
+- [Deploy Project on Testnet](#deploy-project-on-testnet)
+- [Testing](#testing)
+
+## Repository Structure
+
+```
+wardchain-contracts/
+├── contracts/
+│   └── escrow/              # Milestone-based single-release escrow (Soroban)
+│       └── src/
+│           ├── lib.rs       # Contract entry point & module wiring
+│           ├── contract.rs  # Public interface (EscrowContract)
+│           ├── core/        # escrow, milestone, and dispute logic + validators
+│           ├── modules/     # fee calculator/distribution & safe math
+│           ├── events/      # On-chain event emission
+│           └── storage/     # Storage types (WIP)
+├── docs/
+│   └── CONTRACT_REFERENCE.md  # Full technical reference for the escrow contract
+├── report/                  # Analysis reports
+├── Cargo.toml               # Soroban workspace (soroban-sdk 26.x)
+└── README.md
+```
+
+## Contract Features
+
+- **Factory-instance pattern** — `wardchain_new_single_release_escrow` dynamically deploys a fresh escrow instance (via `deploy_v2` with a salt) for each transaction/engagement, so every escrow is fully isolated.
+- **Milestone-based releases** — funds are only moved once *all* milestones are approved; milestone status and approvals are tracked on-chain (`change_milestone_status`, `approve_milestone`).
+- **Dispute handling** — any role can raise a dispute, which freezes the normal flow until `resolve_dispute` is called, then `withdraw_remaining_funds` returns the balance.
+- **Fee distribution** — platform fee plus a fixed WardChain fee, computed with a dedicated safe-math module; combined fees are validated at initialization (≤ 100%).
+- **Batched reads** — `get_escrow`, `get_escrow_by_contract_id`, and `get_multiple_escrow_balances` (up to 20 addresses per call) make off-chain querying cheap and simple.
+- **TTL management** — `extend_contract_ttl` keeps long-running escrows alive on Stellar without manual re-wrapping.
+- **Granular events** — every state change emits a namespaced event (`wardchain_init`, `wardchain_fund`, `wardchain_release`, `wardchain_ms_change`, `wardchain_ms_approve`, …) for indexers and watchers.
+
+> The full interface — authorized signers, preconditions, emitted events, and REST/SDK equivalents — is documented in [docs/CONTRACT_REFERENCE.md](docs/CONTRACT_REFERENCE.md).
+
+---
 
 ## Installing Rust
 
@@ -79,7 +84,7 @@ After installing Rust, add the `wasm32-unknown-unknown` target:
 rustup target add wasm32-unknown-unknown
 ```
 
-
+---
 
 ## Install Stellar CLI
 
@@ -106,11 +111,11 @@ cargo binstall -y stellar-cli
 brew install stellar-cli
 ```
 
-
+---
 
 ## Configuring the CLI for Testnet
 
-Stellar has a test network called Testnet that you can use to deploy  and test your smart contracts. It's a live network, but it's not the  same as the Stellar public network. It's a separate network that is used for development and testing, so you can't use it for production apps.  But it's a great place to test your contracts before you deploy them to  the public network.
+Stellar has a test network called Testnet that you can use to deploy and test your smart contracts. It's a live network, but it's not the same as the Stellar public network. It's a separate network that is used for development and testing, so you can't use it for production apps. But it's a great place to test your contracts before you deploy them to the public network.
 
 To configure your CLI to interact with Testnet, run the following command:
 
@@ -136,11 +141,11 @@ Note the `--global` flag. This creates a file in your home folder's `~/.config/s
 
 If you want project-specific network configurations, you can omit the `--global` flag, and the networks will be added to your working directory's `.soroban/network` folder instead.
 
-###  Configure an Identity
+### Configure an Identity
 
 When you deploy a smart contract to a network, you need to specify an identity that will be used to sign the transactions.
 
-Let's configure an identity called `alice`. You can use any name you want, but it might be nice to have some named identities that you can use for testing, such as [`alice`, `bob`, and `carol`](https://en.wikipedia.org/wiki/Alice_and_Bob). 
+Let's configure an identity called `alice`. You can use any name you want, but it might be nice to have some named identities that you can use for testing, such as [`alice`, `bob`, and `carol`](https://en.wikipedia.org/wiki/Alice_and_Bob).
 
 ```sh
 stellar keys generate --global alice --network testnet
@@ -154,11 +159,9 @@ stellar keys address alice
 
 You can use this [link](https://stellar.expert/explorer/testnet) to verify the identity you create for the testnet.
 
-
+---
 
 ## Deploy Project on Testnet
-
-
 
 ### Build contract
 
@@ -206,8 +209,6 @@ Response:
 d36cd70c3b9c999e172ecc4648e616d9a49fd5dbbae8c28bef0b90bbb32fc762
 ```
 
-
-
 ### Deploy contract
 
 Finally, to deploy the contract, you will need to use the output from the previous command as the input parameter for this command.
@@ -238,7 +239,20 @@ Where:
 - `<source_account>` is the account from which the deployment will be made.
 - `<network>` is the network you are working on (e.g., testnet).
 
+---
 
-## **Thanks to all the contributors who have made this project possible!**
+## Testing
 
-[![Contributors](https://contrib.rocks/image?repo=Trustless-Work/Trustless-Work-Smart-Escrow)](https://github.com/Trustless-Work/Trustless-Work-Smart-Escrow/graphs/contributors)
+The contract ships with a comprehensive test suite covering the full lifecycle — initialization, funding, milestone transitions, approvals, disputes, and validators:
+
+```bash
+cargo test
+```
+
+The tests live in `contracts/escrow/src/tests/` alongside the `#[cfg(test)]` module in `lib.rs`. For edge-case coverage (fees, duplicate operations, unauthorized callers, TTL extension) refer to the [On-Chain Contract Reference](docs/CONTRACT_REFERENCE.md).
+
+---
+
+## Thanks to all the contributors who have made this project possible!
+
+[![Contributors](https://contrib.rocks/image?repo=Wardlabz/wardchain-contracts)](https://github.com/Wardlabz/wardchain-contracts/graphs/contributors)
